@@ -1,0 +1,135 @@
+# docker-compose --project-name="inholiday" up -d
+
+version: "3.9"
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:15.0
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=50"
+      - "-c"
+      - "shared_buffers=1GB"
+      - "-c"
+      - "effective_cache_size=4GB"
+      - "-c"
+      - "work_mem=16MB"
+      - "-c"
+      - "maintenance_work_mem=512MB"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "temp_file_limit=10GB"
+      - "-c"
+      - "log_min_duration_statement=200ms"
+      - "-c"
+      - "idle_in_transaction_session_timeout=10s"
+      - "-c"
+      - "lock_timeout=1s"
+      - "-c"
+      - "statement_timeout=60s"
+      - "-c"
+      - "shared_preload_libraries=pg_stat_statements"
+      - "-c"
+      - "pg_stat_statements.max=10000"
+      - "-c"
+      - "pg_stat_statements.track=all"
+    environment:
+      POSTGRES_DB: "inholidaydb"
+      POSTGRES_USER: "ihuser"
+      POSTGRES_PASSWORD: "ihuserpassword"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ./Init Database:/docker-entrypoint-initdb.d
+      - .:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ihuser -d inholidaydb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 1G
+    networks:
+      - postgres
+
+  pgadmin:
+    container_name: pgadmin_container
+    image: dpage/pgadmin4:6.15
+    environment:
+      PGADMIN_DEFAULT_EMAIL: "ihuser@example.com"
+      PGADMIN_DEFAULT_PASSWORD: "ihuserpassword"
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - ./pgadmin:/var/lib/pgadmin
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 0.8G
+    networks:
+      - postgres
+    depends_on:
+      - postgres
+
+  backend:
+    container_name: web_container
+    image: lowartem/web-inholiday-clear:test-ci-0.1
+    # build:
+    #   context: ./EventlyServer/EventlyServer
+    #   dockerfile: Dockerfile
+    command: dotnet EventlyServer.dll
+    environment:
+      DATABASE_HOST: "postgres_container"
+      DATABASE_PORT: "5432"
+      DATABASE_USER: "ihuser"
+      DATABASE_PASSWORD: "ihuserpassword"
+      DATABASE_NAME: "inholidaydb"
+      AUTH_SECRET_KEY: "PdSgUkXp2s5v8y/B?E(H+MbQeThWmYq3t6w9z$C&F)J@NcRfUjXn2r4u7x!A%D*G-KaPdSgVkYp3s6v8y/B?E(H+MbQeThWmZq4t7w!z$C&F)J@NcRfUjXn2r5u8x/A?D*G-KaPdSgVkYp3s6v9y$B&E)H@MbQeThWmZq4t7w!z%C*F-JaNdRfUjXn2r5u8x/A?D(G+KbPeShVkYp3s6v9y$B&E)H@McQfTjWnZq4t7w!z%C*F-JaNdRgUkXp2s5"
+      ASPNETCORE_URLS: "http://*:5000;"
+    ports:
+      - "5000:5000"
+    working_dir: /app
+    restart: unless-stopped
+    networks:
+      - postgres
+    depends_on:
+      - postgres
+
+  proxy:
+    container_name: proxy_container
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    networks:
+      - postgres
+    depends_on:
+      - backend
+
+  logger:
+    container_name: seq
+    image: lowartem/seq
+    ports:
+      - "5341:80"
+    restart: unless-stopped
+    networks:
+      - postgres
+    depends_on:
+      - backend
+
+networks:
+  postgres:
+    driver: bridge
