@@ -56,7 +56,7 @@ services:
       resources:
         limits:
           cpus: "0.5"
-          memory: 1G
+          memory: 0.8G
     networks:
       - postgres
 
@@ -92,8 +92,8 @@ services:
       DATABASE_NAME: "inholidaydb"
       AUTH_SECRET_KEY: "PdSgUkXp2s5v8y/B?E(H+MbQeThWmYq3t6w9z$C&F)J@NcRfUjXn2r4u7x!A%D*G-KaPdSgVkYp3s6v8y/B?E(H+MbQeThWmZq4t7w!z$C&F)J@NcRfUjXn2r5u8x/A?D*G-KaPdSgVkYp3s6v9y$B&E)H@MbQeThWmZq4t7w!z%C*F-JaNdRfUjXn2r5u8x/A?D(G+KbPeShVkYp3s6v9y$B&E)H@McQfTjWnZq4t7w!z%C*F-JaNdRgUkXp2s5"
       ASPNETCORE_URLS: "http://*:5000;"
-    # ports:
-    #   - "5000:5000"
+    ports:
+      - "5000:5000"
     working_dir: /app
     restart: unless-stopped
     networks:
