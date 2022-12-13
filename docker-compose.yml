@@ -100,6 +100,8 @@ services:
       - postgres
     depends_on:
       - postgres
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   client:
     container_name: web_client
@@ -107,6 +109,8 @@ services:
     restart: unless-stopped
     networks:
       - postgres
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
   proxy:
     container_name: proxy_container
@@ -131,6 +135,19 @@ services:
       - postgres
     depends_on:
       - backend
+
+  watchtower:
+    container_name: watchtower_container
+    image: containrrr/watchtower
+    environment:
+      - WATCHTOWER_LABEL_ENABLE=true
+      - WATCHTOWER_INCLUDE_RESTARTING=true
+      - WATCHTOWER_HTTP_API_UPDATE=true
+      - WATCHTOWER_HTTP_API_TOKEN=1f67e8e048f9fa779570cdf6a60968520d70a5ec4cab3e5ab3bf0f7c32252409
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8080:8080"
 
 networks:
   postgres:
