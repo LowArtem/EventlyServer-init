@@ -43,8 +43,8 @@ services:
     volumes:
       - ./Init Database:/docker-entrypoint-initdb.d
       - .:/var/lib/postgresql/data
-    ports:
-      - "5432:5432"
+    # ports:
+    #   - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ihuser -d inholidaydb"]
       interval: 10s
@@ -72,11 +72,6 @@ services:
     ports:
       - "5050:80"
     restart: unless-stopped
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 0.8G
     networks:
       - postgres
     depends_on:
@@ -97,13 +92,20 @@ services:
       DATABASE_NAME: "inholidaydb"
       AUTH_SECRET_KEY: "PdSgUkXp2s5v8y/B?E(H+MbQeThWmYq3t6w9z$C&F)J@NcRfUjXn2r4u7x!A%D*G-KaPdSgVkYp3s6v8y/B?E(H+MbQeThWmZq4t7w!z$C&F)J@NcRfUjXn2r5u8x/A?D*G-KaPdSgVkYp3s6v9y$B&E)H@MbQeThWmZq4t7w!z%C*F-JaNdRfUjXn2r5u8x/A?D(G+KbPeShVkYp3s6v9y$B&E)H@McQfTjWnZq4t7w!z%C*F-JaNdRgUkXp2s5"
       ASPNETCORE_URLS: "http://*:5000;"
-    ports:
-      - "5000:5000"
+    # ports:
+    #   - "5000:5000"
     working_dir: /app
     restart: unless-stopped
     networks:
       - postgres
     depends_on:
+      - postgres
+
+  client:
+    container_name: web_client
+    image: lowartem/inholiday-client:latest
+    restart: unless-stopped
+    networks:
       - postgres
 
   proxy:
